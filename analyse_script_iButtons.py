@@ -4,6 +4,7 @@
 # Import necessary libraries
 import os
 import pandas as pd
+import tidypython
 
 directory = '/Users/roos/Data/iButton'  # set Path
 data = os.listdir(directory)
@@ -41,7 +42,7 @@ for folder in range(len(data)):
         location_file = pd.read_csv(specific_location, sep=",", header=0, skiprows=18)
         firstlines = pd.read_csv(specific_location, sep=",", header=None, error_bad_lines=False,
                                  warn_bad_lines=False)[0:20]
-       # print(firstlines)
+        # print(firstlines)
         nr_sample_lines = firstlines.iloc[10]  # Start counting from 0
         nr_samples_1 = nr_sample_lines.tail().str.split("\t")[0][0]
         nr_samples = nr_samples_1.split(" ")[4]
@@ -58,4 +59,6 @@ for folder in range(len(data)):
         button_number_1 = button_name_line.tail().str.split("\t")[0][0]
         button_number = button_number_1.split(" ")[3]
 
-        times = pd.DataFrame(OriginalTime = location_file$Date.Time)
+        times = pd.DataFrame({'OriginalTime': location_file['Date/Time']})
+
+
