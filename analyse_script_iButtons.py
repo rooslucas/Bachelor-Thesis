@@ -39,4 +39,23 @@ for folder in range(len(data)):
     for file in all_files:
         specific_location = f'{location}/{file}'
         location_file = pd.read_csv(specific_location, sep=",", header=0, skiprows=18)
-        firstlines = pd.read_csv(specific_location, sep=",", header=None)[1:20, ]
+        firstlines = pd.read_csv(specific_location, sep=",", header=None, error_bad_lines=False,
+                                 warn_bad_lines=False)[0:20]
+       # print(firstlines)
+        nr_sample_lines = firstlines.iloc[10]  # Start counting from 0
+        nr_samples_1 = nr_sample_lines.tail().str.split("\t")[0][0]
+        nr_samples = nr_samples_1.split(" ")[4]
+
+        start_moment_lines = firstlines.iloc[9]
+        start_moment_1 = start_moment_lines.str.split("\t")[0][0]
+        start_moment = ''.join(start_moment_1.split(" ")[4:10])
+
+        sample_rate_line = firstlines.iloc[5]
+        sample_rate_1 = sample_rate_line.str.split("\t")[0][0]
+        sample_rate = sample_rate_1.split(" ")[4]
+
+        button_name_line = firstlines.iloc[1]
+        button_number_1 = button_name_line.tail().str.split("\t")[0][0]
+        button_number = button_number_1.split(" ")[3]
+
+        times = pd.DataFrame(OriginalTime = location_file$Date.Time)
