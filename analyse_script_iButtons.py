@@ -61,4 +61,6 @@ for folder in range(len(data)):
 
         times = pd.DataFrame({'OriginalTime': location_file['Date/Time']})
 
+        new_times = times(new_times.row.str.split(' ', 1).tolist(), columns = ["month", "day","Year", "hour","minutes","sec","amPm"])
+
 
