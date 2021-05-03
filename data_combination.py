@@ -4,6 +4,7 @@ import os
 
 # Create path
 pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 directory = '/Users/roos/Data/TEST'
 
 # Get trigger logger file
@@ -78,5 +79,12 @@ for ibutton in ibuttons_list:
                 location = data_file.index[(data_file['start_time'] == trigger_time)]
                 data_file.at[location, ibutton_name] = temp.iloc[location_temp]['Value']
 
+print("Calculate DPG_finger-chest")
+data_file['DPG_finger-chest'] = data_file['4B0000004516B141'] - data_file['9A00000045146841']
+print("Calculate DPG_nose-forehead")
+data_file['DPG_nose-forehead'] = data_file['CB000000452D7441'] - data_file['F9000000452CCF41']
+print("Calculate DPG_pinna-mastoid")
+data_file['DPG_pinna-mastoid'] = data_file['76000000452C9741'] - data_file['7200000045201D41']
 
-print(data_file)
+
+data_file.to_csv(r'/Users/roos/Data/TEST/trials8SBexpB.csv', index=False, header=True)
