@@ -16,6 +16,7 @@ data_frame = {'trigger': triggers['Trigger'], 'start_time': triggers['TriggerTim
 data_file = pd.DataFrame(data_frame)
 data_file.dropna(inplace=True)
 
+# Remove wrong triggers
 wrong_triggers = data_file.index[(data_file['trigger'] == 9.0) | (data_file['trigger'] == 7.0)]
 data_file.drop(wrong_triggers, inplace=True)
 data_file.reset_index(drop=True, inplace=True)
@@ -43,6 +44,7 @@ for location in locations:
         data_file.at[location, 'trigger'])
     data_file.drop(index=location, inplace=True)
 
+# Drop the other triggers
 for location in locations_2:
     data_file.drop(index=location, inplace=True)
 
@@ -61,6 +63,7 @@ data_file.dropna(inplace=True)
 ibutton_folder = directory + '/' + "8SBexpB"
 ibuttons_list = os.listdir(ibutton_folder)
 
+# Add each ibutton to the dataframe
 for ibutton in ibuttons_list:
     path = ibutton_folder + '/' + ibutton
     temp = pd.read_csv(path, skiprows=18)
@@ -68,6 +71,7 @@ for ibutton in ibuttons_list:
     data_file[ibutton_name] = ''
     print(f"Processing data from {ibutton_name}")
 
+# Get temperature from start time of the trial
     for time in temp['Date/Time']:
         good_time = pd.to_datetime(time)
         location_temp, = temp.index[(temp['Date/Time'] == time)]
@@ -79,12 +83,15 @@ for ibutton in ibuttons_list:
                 location = data_file.index[(data_file['start_time'] == trigger_time)]
                 data_file.at[location, ibutton_name] = temp.iloc[location_temp]['Value']
 
+# Calculate three DPGs
 print("Calculate DPG_finger-chest")
 data_file['DPG_finger-chest'] = data_file['4B0000004516B141'] - data_file['9A00000045146841']
+
 print("Calculate DPG_nose-forehead")
 data_file['DPG_nose-forehead'] = data_file['CB000000452D7441'] - data_file['F9000000452CCF41']
+
 print("Calculate DPG_pinna-mastoid")
 data_file['DPG_pinna-mastoid'] = data_file['76000000452C9741'] - data_file['7200000045201D41']
 
-
+# Safe file to a csv
 data_file.to_csv(r'/Users/roos/Data/TEST/trials8SBexpB.csv', index=False, header=True)
