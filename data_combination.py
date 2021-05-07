@@ -12,9 +12,8 @@ directory = '/Users/roos/Data'
 trigger_folder = directory + '/TriggerLogger/BSRT'
 trigger_list = os.listdir(trigger_folder)
 trigger_list.remove('.DS_Store')
-print(trigger_list)
 
-for participant in trigger_list[0:6]:
+for participant in trigger_list:
     participant_id = participant.split('_')
     participant_id = participant_id[0]
 
