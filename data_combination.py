@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import pandas as pd
 import os
-import glob
 
 # Create path
 pd.set_option('display.max_rows', None)
