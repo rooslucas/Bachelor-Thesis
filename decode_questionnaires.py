@@ -5,8 +5,8 @@ demo_file = pd.read_excel(demo_folder)
 questionnaires_file = pd.DataFrame()
 
 for PPID in demo_file['PPID']:
-    row_number = demo_file.index[demo_file['PPID'] == PPID]
-    print(demo_file.loc[row_number, :])
+    row_number, = demo_file.index[demo_file['PPID'] == PPID]
+    print(row_number)
     # print(demo_file.at[row_number, ])
     if row_number is not None:
         # Code component 1
@@ -22,13 +22,13 @@ for PPID in demo_file['PPID']:
             component_1 = None
 
         # Code component 2
-        if demo_file.at[row_number, '2_MinutesSleep'] <= 15:
+        if int(demo_file.at[row_number, '2_MinutesSleep']) <= 15:
             question_2 = 0
-        elif demo_file.at[row_number, '2_MinutesSleep'] >= 16 & demo_file.at[row_number, '2_MinutesSleep'] <= 30:
+        elif int(demo_file.at[row_number, '2_MinutesSleep']) >= 16 & int(demo_file.at[row_number, '2_MinutesSleep']) <= 30:
             question_2 = 1
-        elif demo_file.at[row_number, '2_MinutesSleep'] >= 31 & demo_file.at[row_number, '2_MinutesSleep'] <= 60:
+        elif int(demo_file.at[row_number, '2_MinutesSleep']) >= 31 & int(demo_file.at[row_number, '2_MinutesSleep']) <= 60:
             question_2 = 2
-        elif demo_file.at[row_number, '2_MinutesSleep'] > 60:
+        elif int(demo_file.at[row_number, '2_MinutesSleep'] > 60):
             question_2 = 3
         else:
             question_2 = None
