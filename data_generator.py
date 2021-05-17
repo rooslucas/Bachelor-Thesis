@@ -20,6 +20,6 @@ def generate_data(n, k, x_min=0, x_max=10):
     return pd.DataFrame(np.hstack((matrix_x, matrix_x2, y_var)))
 
 
-data = generate_data(1000, 4)
+data = generate_data(2500, 5)
 
 data.to_csv(r'/Users/roos/Data/' + 'test_data.csv', index=False, header=True)
