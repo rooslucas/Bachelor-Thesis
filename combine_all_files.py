@@ -1,20 +1,16 @@
 # Script to combine all trials from all participants
 import pandas as pd
-import os, glob
+import os
+import glob
 
 directory = '/Users/roos/Data/Trials/'
 
+# Define the files and paths
 all_files = glob.glob(os.path.join(directory, "*.csv"))
-print(all_files)
+# Read all the files
 df_all_files = (pd.read_csv(f, sep=',') for f in all_files)
-print(df_all_files)
+# Concatenate all the files
 combined_files = pd.concat(df_all_files, ignore_index=True)
+# Safe them in a new file
 combined_files.to_csv(r'/Users/roos/Data/all_trials.csv', index=False, header=True)
 
-# Combine all trials in one file
-# trials_folder = directory + '/Trials'
-# trials_list = os.listdir(trials_folder)
-# all_trials = glob.glob(os.path.join(trials_folder, '*.csv'))
-#
-# combined_trials = pd.concat([pd.read_csv(f, delimiter='t', encoding='UTF-16') for f in all_trials])
-# combined_trials.to_csv("r'/Users/roos/Data/alltrials.csv")
