@@ -12,28 +12,24 @@ trigger_folder = directory + '/TriggerLogger/BSRT'
 trigger_list = os.listdir(trigger_folder)
 trigger_list.remove('.DS_Store')
 
+# Loop through all the participants
 for participant in trigger_list:
+    # Safe the participant id
     participant_id = participant.split('_')
     participant_id = participant_id[0]
 
     print(f"Processing data from participant {participant_id}")
     trigger_path = trigger_folder + '/' + participant
-    triggers = pd.read_csv(trigger_path)  # Skip practice trials
+    triggers = pd.read_csv(trigger_path)
 
     # Create dataframe
     data_frame = {'trigger': triggers['Trigger'], 'start_time': triggers['TriggerTime']}
     data_file = pd.DataFrame(data_frame)
 
-    # Drop all rows before start trigger
+    # Drop all rows before start trigger --> drop practice trials
     start, = data_file.index[data_file['trigger'] == 20.0]
     data_file.drop(range(1, start), inplace=True)
     data_file.dropna(inplace=True)
-
-    # Remove wrong triggers
-    # wrong_triggers = data_file.index[(data_file['trigger'] == 9.0) | (data_file['trigger'] == 7.0) |
-    #                                  (data_file['trigger'] == 28.0)]
-    # data_file.drop(wrong_triggers, inplace=True)
-    # data_file.reset_index(drop=True, inplace=True)
 
     # Refactor the trigger times
     original_time = datetime(year=1970, month=1, day=1, hour=2)
@@ -46,12 +42,12 @@ for participant in trigger_list:
     # Add new column with end time of each trial
     data_file['end_time'] = ''
 
-    # Get locations of triggers 8, 0 and 2
+    # Get locations of triggers 8, 0 and 1
     locations = data_file.index[(data_file['trigger'] == 8.0) | (data_file['trigger'] == 0.0)]
     locations_2 = data_file.index[(data_file['trigger'] == 1.0)]
     data_file['trigger'] = data_file['trigger'].astype(str)
 
-    # Make each row one trial
+    # Make each row one trial from target to response
     for location in locations:
         data_file.at[location - 1, 'end_time'] = data_file.at[location, 'start_time']
         data_file.at[location - 1, 'trigger'] = str(data_file.at[location - 1, 'trigger']) + '-' + str(
@@ -67,29 +63,31 @@ for participant in trigger_list:
 
     # TODO: Get alertness and sleepiness from results
     # Get correct responses from BSRT
-    results_folder = directory + '/BSRT Performance'
-    results_list = os.listdir(results_folder)
-    for file in results_list:
+    # results_folder = directory + '/BSRT Performance'
+    # results_list = os.listdir(results_folder)
+    # for file in results_list:
+    #
+    #     if file.startswith(participant_id):
+    #         results = None
+    #         # results_path = results_folder + '/' + file
+    #         # results = pd.read_csv(results_path, skiprows=range(1, 7))
+    #         break
+    #     else:
+    #         results = None
+    # if results is not None:
+    #     data_file['results'] = results['response.corr']
+    # else:
 
-        if file.startswith(participant_id):
-            results = None
-            # results_path = results_folder + '/' + file
-            # results = pd.read_csv(results_path, skiprows=range(1, 7))
-            break
+    # Get responses from triggers
+    data_file['results'] = ''
+    for trigger in data_file['trigger']:
+        loc = data_file.index[data_file['trigger'] == trigger]
+        if trigger == '2.0-8.0':
+            data_file.at[loc, 'results'] = 1.0
+        elif trigger == '2.0-0.0':
+            data_file.at[loc, 'results'] = 0.0
         else:
-            results = None
-    if results is not None:
-        data_file['results'] = results['response.corr']
-    else:
-        data_file['results'] = ''
-        for trigger in data_file['trigger']:
-            loc = data_file.index[data_file['trigger'] == trigger]
-            if trigger == '2.0-8.0':
-                data_file.at[loc, 'results'] = 1.0
-            elif trigger == '2.0-0.0':
-                data_file.at[loc, 'results'] = 0.0
-            else:
-                data_file.at[loc, 'results'] = 99
+            data_file.at[loc, 'results'] = 99
 
         missing_results = data_file.index[data_file['results'] == 99]
         for error in missing_results:
@@ -109,7 +107,7 @@ for participant in trigger_list:
         data_file[ibutton_name] = 99.9
         print(f"Processing data from {ibutton_name}")
 
-    # Get temperature from start time of the trial
+    # Get temperature from 4 seconds before target presenting (shortest interval)
         for time in temp['Date/Time']:
             good_time = pd.to_datetime(time)
             location_temp, = temp.index[(temp['Date/Time'] == time)]
@@ -117,7 +115,7 @@ for participant in trigger_list:
                 if good_time == trigger_time - timedelta(seconds=4):
                     location = data_file.index[(data_file['start_time'] == trigger_time)]
                     data_file.at[location, ibutton_name] = temp.iloc[location_temp]['Value']
-                elif good_time == trigger_time - timedelta(seconds=5):
+                elif good_time == trigger_time - timedelta(seconds=5):  # not available do 5 seconds before
                     location = data_file.index[(data_file['start_time'] == trigger_time)]
                     data_file.at[location, ibutton_name] = temp.iloc[location_temp]['Value']
 
