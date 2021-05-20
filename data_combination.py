@@ -135,13 +135,12 @@ for participant in trigger_list:
     data_file['DPG_pinna-mastoid'] = data_file['76000000452C9741'] - data_file['7200000045201D41']
 
     # TODO: Add demographic data
-    # questionnaire_folder = directory + '/Questionnaires/questionnaire_data.csv'
-    # questionnaire_file = pd.read_csv(questionnaire_folder)
-    # print(questionnaire_file.at[5, 'PPID'])
-    # row_number, = questionnaire_file.index[(questionnaire_file['PPID'] == participant_id)]
-    # print(row_number)
-    # data_file['Gender'] = questionnaire_file.at[row_number, 'Gender']
-    # # data_file['type'] = questionnaire_file.at[row_number, 'type']
+    print("Adding data from the questionnaires")
+    questionnaire_folder = directory + '/Questionnaires/questionnaire_data.csv'
+    questionnaire_file = pd.read_csv(questionnaire_folder)
+    row_number, = questionnaire_file.index[(questionnaire_file['PPID'] == participant_id)]
+    data_file['Gender'] = questionnaire_file.at[row_number, 'Gender']
+    data_file['type'] = questionnaire_file.at[row_number, 'type']
     # # data_file['PSQI'] = questionnaire_file.at[row_number, 'total_score_PSQI']
 
     # Safe file to a csv
