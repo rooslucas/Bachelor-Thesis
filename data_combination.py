@@ -1,4 +1,8 @@
+# Written by Rosalie Lucas
+# Last update 21/05/2021
+
 from datetime import datetime, timedelta
+import time
 import pandas as pd
 import os
 
@@ -13,7 +17,7 @@ trigger_list = os.listdir(trigger_folder)
 trigger_list.remove('.DS_Store')
 
 # Loop through all the participants
-for participant in trigger_list:
+for participant in trigger_list[1:2]:
     # Safe the participant id
     participant_id = participant.split('_')
     participant_id = participant_id[0]
@@ -36,7 +40,7 @@ for participant in trigger_list:
 
     for time in data_file['start_time']:
         new_time = original_time + timedelta(seconds=time)
-        new_time = new_time - timedelta(microseconds=new_time.microsecond)
+        # new_time = new_time - timedelta(microseconds=new_time.microsecond)
         data_file['start_time'].replace(time, new_time, inplace=True)
 
     # Add new column with end time of each trial
@@ -95,6 +99,49 @@ for participant in trigger_list:
 
     data_file.dropna(inplace=True)
 
+    # TODO: add FLIR data
+    print("Processing FLIR data")
+    flir_folder = directory + '/FLIR'
+    flir_list = os.listdir(flir_folder)
+    for file in flir_list:
+        if file.startswith(participant_id):
+            flir_path = flir_folder + '/' + file
+            flir_data = pd.read_excel(flir_path, skiprows=range(0, 12))
+            flir_data['good_time'] = ''
+            data_file['El1.Average'] = 99.9
+            data_file['El2.Average'] = 99.9
+
+    for point in range(len(flir_data['Time'])):
+        ttime = str(flir_data.at[point, 'Time'])
+        good_time = pd.to_datetime(ttime) + timedelta(milliseconds=int(flir_data.at[point, 'Milliseconds']))
+        good_time = datetime.combine(pd.to_datetime(flir_data.at[point, 'Date']), good_time.time())
+        flir_data.at[point, 'good_time'] = good_time
+
+    for time in data_file['start_time']:
+        row, = data_file.index[(data_file['start_time'] == time)]
+        difference = datetime.now() - time
+        print(time)
+
+        for ttime in flir_data['good_time']:
+            if int((time - datetime(1970,1,1)).total_seconds()) == int((ttime - datetime(1970,1,1)).total_seconds()):
+                diff = time - ttime
+                if diff < difference:
+                    difference = diff
+                    nearest_time = ttime
+            elif int((time - datetime(1970,1,1)).total_seconds()) + 1 == int((ttime - datetime(1970,1,1)).total_seconds()):
+                break
+        #nearest_value = min(data_file['start_time'], key=lambda date: abs((good_time-date).microseconds()))
+        print(nearest_time)
+        print('Add values to this point')
+        data_file.at[row, 'El1.Average'] = flir_data.iloc[point]['El1.Average']
+        data_file.at[row, 'El2.Average'] = flir_data.iloc[point]['El2.Average']
+
+    print(data_file)
+    # TODO: change times.
+    for time in data_file['start_time']:
+        new_time = time - timedelta(microseconds=time.microsecond)
+        data_file['start_time'].replace(time, new_time, inplace=True)
+
     # Import iButton data
     ibutton_folder = directory + '/iButton' + '/' + participant_id
     ibuttons_list = os.listdir(ibutton_folder)
@@ -107,9 +154,9 @@ for participant in trigger_list:
         data_file[ibutton_name] = 99.9
         print(f"Processing data from {ibutton_name}")
 
-    # Get temperature from 4 seconds before target presenting (shortest interval)
+        # Get temperature from 4 seconds before target presenting (shortest interval)
         for time in temp['Date/Time']:
-            good_time = pd.to_datetime(time)
+            good_time = pd.to_time(time)
             location_temp, = temp.index[(temp['Date/Time'] == time)]
             for trigger_time in data_file['start_time']:
                 if good_time == trigger_time - timedelta(seconds=4):
@@ -134,14 +181,14 @@ for participant in trigger_list:
     print("Calculate DPG_pinna-mastoid")
     data_file['DPG_pinna-mastoid'] = data_file['76000000452C9741'] - data_file['7200000045201D41']
 
-    # TODO: Add demographic data
-    print("Adding data from the questionnaires")
-    questionnaire_folder = directory + '/Questionnaires/questionnaire_data.csv'
-    questionnaire_file = pd.read_csv(questionnaire_folder)
-    row_number, = questionnaire_file.index[(questionnaire_file['PPID'] == participant_id)]
-    data_file['Gender'] = questionnaire_file.at[row_number, 'Gender']
-    data_file['type'] = questionnaire_file.at[row_number, 'type']
-    # # data_file['PSQI'] = questionnaire_file.at[row_number, 'total_score_PSQI']
+    # # TODO: Add demographic data
+    # print("Adding data from the questionnaires")
+    # questionnaire_folder = directory + '/Questionnaires/questionnaire_data.csv'
+    # questionnaire_file = pd.read_csv(questionnaire_folder)
+    # row_number, = questionnaire_file.index[(questionnaire_file['PPID'] == participant_id)]
+    # data_file['Gender'] = questionnaire_file.at[row_number, 'Gender']
+    # data_file['type'] = questionnaire_file.at[row_number, 'type']
+    # # # data_file['PSQI'] = questionnaire_file.at[row_number, 'total_score_PSQI']
 
     # Safe file to a csv
     data_file.to_csv(r'/Users/roos/Data/Trials/trials' + participant_id + '.csv', index=False, header=True)
