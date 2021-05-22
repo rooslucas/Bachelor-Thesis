@@ -156,7 +156,7 @@ for participant in trigger_list[1:2]:
 
         # Get temperature from 4 seconds before target presenting (shortest interval)
         for time in temp['Date/Time']:
-            good_time = pd.to_time(time)
+            good_time = pd.to_datetime(time)
             location_temp, = temp.index[(temp['Date/Time'] == time)]
             for trigger_time in data_file['start_time']:
                 if good_time == trigger_time - timedelta(seconds=4):
@@ -191,4 +191,4 @@ for participant in trigger_list[1:2]:
     # # # data_file['PSQI'] = questionnaire_file.at[row_number, 'total_score_PSQI']
 
     # Safe file to a csv
-    data_file.to_csv(r'/Users/roos/Data/Trials/trials' + participant_id + '.csv', index=False, header=True)
+    data_file.to_csv(r'/Users/roos/Data/testets/trials' + participant_id + '.csv', index=False, header=True)
