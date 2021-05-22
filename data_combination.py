@@ -99,45 +99,51 @@ for participant in trigger_list[1:2]:
 
     data_file.dropna(inplace=True)
 
-    # TODO: add FLIR data
+    # Add the flir data
     print("Processing FLIR data")
     flir_folder = directory + '/FLIR'
     flir_list = os.listdir(flir_folder)
+
+    # Import the files
     for file in flir_list:
         if file.startswith(participant_id):
             flir_path = flir_folder + '/' + file
             flir_data = pd.read_excel(flir_path, skiprows=range(0, 12))
+            # Create the right columns
             flir_data['good_time'] = ''
             data_file['El1.Average'] = 99.9
             data_file['El2.Average'] = 99.9
 
+    # Reset times of flir data
     for point in range(len(flir_data['Time'])):
         ttime = str(flir_data.at[point, 'Time'])
         good_time = pd.to_datetime(ttime) + timedelta(milliseconds=int(flir_data.at[point, 'Milliseconds']))
         good_time = datetime.combine(pd.to_datetime(flir_data.at[point, 'Date']), good_time.time())
         flir_data.at[point, 'good_time'] = good_time
 
+    # Loop through trials
     for time in data_file['start_time']:
         row, = data_file.index[(data_file['start_time'] == time)]
         difference = datetime.now() - time
         print(time)
 
+        # Add values from nearest time sample
         for ttime in flir_data['good_time']:
             if int((time - datetime(1970,1,1)).total_seconds()) == int((ttime - datetime(1970,1,1)).total_seconds()):
                 diff = time - ttime
                 if diff < difference:
                     difference = diff
                     nearest_time = ttime
+            # Break when you passed the second of time
             elif int((time - datetime(1970,1,1)).total_seconds()) + 1 == int((ttime - datetime(1970,1,1)).total_seconds()):
                 break
-        #nearest_value = min(data_file['start_time'], key=lambda date: abs((good_time-date).microseconds()))
+
         print(nearest_time)
         print('Add values to this point')
-        data_file.at[row, 'El1.Average'] = flir_data.iloc[point]['El1.Average']
-        data_file.at[row, 'El2.Average'] = flir_data.iloc[point]['El2.Average']
+        data_file.at[row, 'FLIR_forehead'] = flir_data.iloc[point]['El1.Average']
+        data_file.at[row, 'FLIR_nose'] = flir_data.iloc[point]['El2.Average']
 
-    print(data_file)
-    # TODO: change times.
+    # Prep times for ibutton matches
     for time in data_file['start_time']:
         new_time = time - timedelta(microseconds=time.microsecond)
         data_file['start_time'].replace(time, new_time, inplace=True)
@@ -180,6 +186,9 @@ for participant in trigger_list[1:2]:
 
     print("Calculate DPG_pinna-mastoid")
     data_file['DPG_pinna-mastoid'] = data_file['76000000452C9741'] - data_file['7200000045201D41']
+
+    print("Calculate FLIR_DPG_nose-forehead")
+    data_file['FLIR_DPG_nose-forehead'] = data_file['FLIR_nose'] - data_file['FLIR_forehead']
 
     # # TODO: Add demographic data
     # print("Adding data from the questionnaires")
