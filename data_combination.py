@@ -15,9 +15,10 @@ directory = '/Users/roos/Data'
 trigger_folder = directory + '/TriggerLogger/BSRT'
 trigger_list = os.listdir(trigger_folder)
 trigger_list.remove('.DS_Store')
-
+i = 1
 # Loop through all the participants
 for participant in trigger_list:
+    print(f"Participant {i}/{len(trigger_list)}")
     # Safe the participant id
     participant_id = participant.split('_')
     participant_id = participant_id[0]
@@ -99,52 +100,52 @@ for participant in trigger_list:
 
     data_file.dropna(inplace=True)
 
-    # # Add the flir data
-    # print("Processing FLIR data")
-    # flir_folder = directory + '/FLIR'
-    # flir_list = os.listdir(flir_folder)
-    #
-    # # Import the files
-    # for file in flir_list:
-    #     if file.startswith(participant_id):
-    #         flir_path = flir_folder + '/' + file
-    #         flir_data = pd.read_excel(flir_path, skiprows=range(0, 12))
-    #         # Create the right columns
-    #         flir_data['good_time'] = ''
-    #         data_file['El1.Average'] = 99.9
-    #         data_file['El2.Average'] = 99.9
-    #         break
-    #
-    # # Reset times of flir data
-    # for point in range(len(flir_data['Time'])):
-    #     ttime = str(flir_data.at[point, 'Time'])
-    #     good_time = pd.to_datetime(ttime) + timedelta(milliseconds=int(flir_data.at[point, 'Milliseconds']))
-    #     good_time = datetime.combine(pd.to_datetime(flir_data.at[point, 'Date']), good_time.time())
-    #     flir_data.at[point, 'good_time'] = good_time
-    #
-    # # Loop through trials
-    # for time in data_file['start_time']:
-    #     row, = data_file.index[(data_file['start_time'] == time)]
-    #     difference = datetime.now() - time
-    #     print(time)
-    #
-    #     # Add values from nearest time sample
-    #     for ttime in flir_data['good_time']:
-    #         if int((time - datetime(1970,1,1)).total_seconds()) == int((ttime - datetime(1970,1,1)).total_seconds()):
-    #             diff = time - ttime
-    #             if diff < difference:
-    #                 difference = diff
-    #                 nearest_time = ttime
-    #         # Break when you passed the second of time
-    #         # Towards the end of the file the running process slows down
-    #         elif int((time - datetime(1970,1,1)).total_seconds()) + 1 == int((ttime - datetime(1970,1,1)).total_seconds()):
-    #             break
-    #
-    #     # Add values to the dataframe
-    #     print(nearest_time)
-    #     print('Add values to this point')
-    #     data_file.at[row, 'FLIR_forehead'] = flir_data.iloc[point]['El1.Average']
-    #     data_file.at[row, 'FLIR_nose'] = flir_data.iloc[point]['El2.Average']
+    # Add the flir data
+    print("Processing FLIR data")
+    flir_folder = directory + '/FLIR'
+    flir_list = os.listdir(flir_folder)
+
+    # Import the files
+    for file in flir_list:
+        if file.startswith(participant_id):
+            flir_path = flir_folder + '/' + file
+            flir_data = pd.read_excel(flir_path, skiprows=range(0, 12))
+            # Create the right columns
+            flir_data['good_time'] = ''
+            data_file['FLIR_forehead'] = 99.9
+            data_file['FLIR_nose'] = 99.9
+            break
+        else:
+            flir_data = None
+
+    if flir_data is not None:
+        # Reset times of flir data
+        for point in range(len(flir_data['Time'])):
+            ttime = str(flir_data.at[point, 'Time'])
+            good_time = pd.to_datetime(ttime) + timedelta(milliseconds=int(flir_data.at[point, 'Milliseconds']))
+            good_time = datetime.combine(pd.to_datetime(flir_data.at[point, 'Date']), good_time.time())
+            flir_data.at[point, 'good_time'] = good_time
+
+        # Loop through trials
+        for time in data_file['start_time']:
+            row, = data_file.index[(data_file['start_time'] == time)]
+            difference = datetime.now() - time
+
+            # Add values from nearest time sample
+            for ttime in flir_data['good_time']:
+                if int((time - datetime(1970,1,1)).total_seconds()) == int((ttime - datetime(1970,1,1)).total_seconds()):
+                    diff = time - ttime
+                    if diff < difference:
+                        difference = diff
+                        nearest_time = ttime
+                # Break when you passed the second of time
+                # Towards the end of the file the running process slows down
+                elif int((time - datetime(1970,1,1)).total_seconds()) + 1 == int((ttime - datetime(1970,1,1)).total_seconds()):
+                    break
+
+            # Add values to the dataframe
+            data_file.at[row, 'FLIR_forehead'] = flir_data.iloc[point]['El1.Average']
+            data_file.at[row, 'FLIR_nose'] = flir_data.iloc[point]['El2.Average']
 
     # Prep times for ibutton matches
     for time in data_file['start_time']:
@@ -190,18 +191,21 @@ for participant in trigger_list:
     print("Calculate DPG_pinna-mastoid")
     data_file['DPG_pinna-mastoid'] = data_file['76000000452C9741'] - data_file['7200000045201D41']
 
-    print("Calculate FLIR_DPG_nose-forehead")
-    data_file['FLIR_DPG_nose-forehead'] = data_file['FLIR_nose'] - data_file['FLIR_forehead']
+    if flir_data is not None:
+        print("Calculate FLIR_DPG_nose-forehead")
+        data_file['FLIR_DPG_nose-forehead'] = data_file['FLIR_nose'] - data_file['FLIR_forehead']
 
     # # TODO: Add demographic data
     print("Adding data from the questionnaires")
     questionnaire_folder = directory + '/Questionnaires/questionnaire_data.csv'
     questionnaire_file = pd.read_csv(questionnaire_folder)
-    if questionnaire_file is not None:
-        row_number, = questionnaire_file.index[(questionnaire_file['PPID'] == participant_id)]
-        data_file['Gender'] = questionnaire_file.at[row_number, 'Gender']
-        data_file['MEQ_type'] = questionnaire_file.at[row_number, 'type']
-        data_file['PSQI'] = questionnaire_file.at[row_number, 'total_score_PSQI']
+    row_number = questionnaire_file.index[(questionnaire_file['PPID'] == participant_id)]
+    if len(row_number) != 0:
+        data_file['Gender'] = questionnaire_file.at[row_number[0], 'Gender']
+        data_file['Age'] = questionnaire_file.at[row_number[0], 'Age']
+        data_file['MEQ_type'] = questionnaire_file.at[row_number[0], 'type']
+        data_file['PSQI'] = questionnaire_file.at[row_number[0], 'total_score_PSQI']
 
     # Safe file to a csv
-    data_file.to_csv(r'/Users/roos/Data/testets/trials' + participant_id + '.csv', index=False, header=True)
+    data_file.to_csv(r'/Users/roos/Data/trials_2/trials' + participant_id + '.csv', index=False, header=True)
+    i += 1
