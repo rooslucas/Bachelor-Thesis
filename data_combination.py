@@ -1,8 +1,15 @@
 # Written by Rosalie Lucas
-# Last update 21/05/2021
+# Last update 27/05/2021
+# Useful for combining iButton, FLIR and questionnaire data
 
+# Data structure in the following folders
+# [Data] --------- [FLIR] |
+#                  [Questionnaires] |
+#                  [TriggerLogger] --------- [BSRT]
+#                  [iButton] --------------- [Participant folder]
+
+# Import necessary libraries
 from datetime import datetime, timedelta
-import time
 import pandas as pd
 import os
 
@@ -18,7 +25,7 @@ trigger_list.remove('.DS_Store')
 i = 1
 # Loop through all the participants
 for participant in trigger_list:
-    print(f"Participant {i}/{len(trigger_list)}")
+    print(f"\n Participant {i}/{len(trigger_list)}")
     # Safe the participant id
     participant_id = participant.split('_')
     participant_id = participant_id[0]
@@ -65,23 +72,6 @@ for participant in trigger_list:
 
     # Reset index of dataframe
     data_file.reset_index(drop=True, inplace=True)
-
-    # TODO: Get alertness and sleepiness from results
-    # Get correct responses from BSRT
-    # results_folder = directory + '/BSRT Performance'
-    # results_list = os.listdir(results_folder)
-    # for file in results_list:
-    #
-    #     if file.startswith(participant_id):
-    #         results = None
-    #         # results_path = results_folder + '/' + file
-    #         # results = pd.read_csv(results_path, skiprows=range(1, 7))
-    #         break
-    #     else:
-    #         results = None
-    # if results is not None:
-    #     data_file['results'] = results['response.corr']
-    # else:
 
     # Get responses from triggers
     data_file['results'] = ''
@@ -133,14 +123,14 @@ for participant in trigger_list:
 
             # Add values from nearest time sample
             for ttime in flir_data['good_time']:
-                if int((time - datetime(1970,1,1)).total_seconds()) == int((ttime - datetime(1970,1,1)).total_seconds()):
+                if int((time - datetime(1970, 1, 1)).total_seconds()) == int((ttime - datetime(1970, 1, 1)).total_seconds()):
                     diff = time - ttime
                     if diff < difference:
                         difference = diff
                         nearest_time = ttime
                 # Break when you passed the second of time
                 # Towards the end of the file the running process slows down
-                elif int((time - datetime(1970,1,1)).total_seconds()) + 1 == int((ttime - datetime(1970,1,1)).total_seconds()):
+                elif int((time - datetime(1970,1,1)).total_seconds()) + 1 == int((ttime - datetime(1970, 1, 1)).total_seconds()):
                     break
 
             # Add values to the dataframe
@@ -195,17 +185,18 @@ for participant in trigger_list:
         print("Calculate FLIR_DPG_nose-forehead")
         data_file['FLIR_DPG_nose-forehead'] = data_file['FLIR_nose'] - data_file['FLIR_forehead']
 
-    # # TODO: Add demographic data
+    # Add data from questionnaires
     print("Adding data from the questionnaires")
     questionnaire_folder = directory + '/Questionnaires/questionnaire_data.csv'
     questionnaire_file = pd.read_csv(questionnaire_folder)
     row_number = questionnaire_file.index[(questionnaire_file['PPID'] == participant_id)]
     if len(row_number) != 0:
-        data_file['Gender'] = questionnaire_file.at[row_number[0], 'Gender']
-        data_file['Age'] = questionnaire_file.at[row_number[0], 'Age']
-        data_file['MEQ_type'] = questionnaire_file.at[row_number[0], 'type']
-        data_file['PSQI'] = questionnaire_file.at[row_number[0], 'total_score_PSQI']
+        data_file['Gender'] = questionnaire_file.at[row_number[0], 'Gender']  # Male / Female
+        data_file['Age'] = questionnaire_file.at[row_number[0], 'Age']        # Number
+        data_file['MEQ_type'] = questionnaire_file.at[row_number[0], 'type']  # Morning / Evening / Intermediate
+        data_file['PSQI'] = questionnaire_file.at[row_number[0], 'total_score_PSQI']  # Float score on PSQI
 
     # Safe file to a csv
-    data_file.to_csv(r'/Users/roos/Data/trials_2/trials' + participant_id + '.csv', index=False, header=True)
+    data_file.to_csv(r'/Users/roos/Data/final_trials/trials' + participant_id + '.csv', index=False, header=True)
+    # Keep track of participants
     i += 1
