@@ -1,6 +1,6 @@
 # Written by Rosalie Lucas
-# Last update 27/05/2021
-# Useful for combining iButton, FLIR and questionnaire data
+# Last update 28/05/2021
+# Useful for combining Triggerlogger, iButton, FLIR and questionnaire data
 
 # Data structure in the following folders
 # [Data] --------- [FLIR] |
@@ -116,26 +116,46 @@ for participant in trigger_list:
             good_time = datetime.combine(pd.to_datetime(flir_data.at[point, 'Date']), good_time.time())
             flir_data.at[point, 'good_time'] = good_time
 
+        # Track trials and start time in file
+        trial = 0
+        start = 0
         # Loop through trials
         for time in data_file['start_time']:
+            matches_el1 = []
+            matches_el2 = []
             row, = data_file.index[(data_file['start_time'] == time)]
             difference = datetime.now() - time
 
             # Add values from nearest time sample
-            for ttime in flir_data['good_time']:
-                if int((time - datetime(1970, 1, 1)).total_seconds()) == int((ttime - datetime(1970, 1, 1)).total_seconds()):
-                    diff = time - ttime
-                    if diff < difference:
-                        difference = diff
-                        nearest_time = ttime
+            for time_f in range(start, len(flir_data['good_time'])):
+                ttime = flir_data.iloc[time_f]['good_time']
+                if int((time - datetime(1970, 1, 1)).total_seconds()) - 4 == int((ttime - datetime(1970, 1, 1)).total_seconds()):
+                    matches_el1.append(flir_data.iloc[time_f]['El1.Average'])
+                    matches_el2.append(flir_data.iloc[time_f]['El2.Average'])
+                    new_time = time_f  # Define new start point
+
                 # Break when you passed the second of time
                 # Towards the end of the file the running process slows down
-                elif int((time - datetime(1970,1,1)).total_seconds()) + 1 == int((ttime - datetime(1970, 1, 1)).total_seconds()):
+                elif int((time - datetime(1970, 1, 1)).total_seconds()) - 3 == int((ttime - datetime(1970, 1, 1)).total_seconds()):
+                    start = new_time  # Update start time, safes running time
                     break
-
+            # Calculate average values over one second
+            if len(matches_el1) != 0:
+                average_el1 = sum(matches_el1) / len(matches_el1)
+                average_el2 = sum(matches_el2) / len(matches_el2)
             # Add values to the dataframe
-            data_file.at[row, 'FLIR_forehead'] = flir_data.iloc[point]['El1.Average']
-            data_file.at[row, 'FLIR_nose'] = flir_data.iloc[point]['El2.Average']
+                data_file.at[row, 'FLIR_forehead'] = average_el1
+                data_file.at[row, 'FLIR_nose'] = average_el2
+                print(f'{trial} done!')
+                trial += 1
+
+    # Add column with reaction times
+    print("Adding reaction times")
+    data_file['reaction_times'] = ''
+    for time in data_file['start_time']:
+        index, = data_file.index[(data_file['start_time'] == time)]
+        reaction_time = (data_file.at[index, 'end_time'] - time).total_seconds() * 1000
+        data_file.at[index, 'reaction_times'] = reaction_time
 
     # Prep times for ibutton matches
     for time in data_file['start_time']:
@@ -151,25 +171,26 @@ for participant in trigger_list:
         path = ibutton_folder + '/' + ibutton
         temp = pd.read_csv(path, skiprows=18)
         ibutton_name, rest = ibutton.split('_')
-        data_file[ibutton_name] = 99.9
         print(f"Processing data from {ibutton_name}")
 
         # Get temperature from 4 seconds before target presenting (shortest interval)
-        for time in temp['Date/Time']:
-            good_time = pd.to_datetime(time)
-            location_temp, = temp.index[(temp['Date/Time'] == time)]
-            for trigger_time in data_file['start_time']:
-                if good_time == trigger_time - timedelta(seconds=4):
-                    location = data_file.index[(data_file['start_time'] == trigger_time)]
-                    data_file.at[location, ibutton_name] = temp.iloc[location_temp]['Value']
-                elif good_time == trigger_time - timedelta(seconds=5):  # not available do 5 seconds before
-                    location = data_file.index[(data_file['start_time'] == trigger_time)]
-                    data_file.at[location, ibutton_name] = temp.iloc[location_temp]['Value']
+        if ibutton_name != "FF00000045298741":  # Skipping the room temperature
+            data_file[ibutton_name] = 99.9
+            for time in temp['Date/Time']:
+                good_time = pd.to_datetime(time)
+                location_temp, = temp.index[(temp['Date/Time'] == time)]
+                for trigger_time in data_file['start_time']:
+                    if good_time == trigger_time - timedelta(seconds=4):
+                        location = data_file.index[(data_file['start_time'] == trigger_time)]
+                        data_file.at[location, ibutton_name] = temp.iloc[location_temp]['Value']
+                    elif good_time == trigger_time - timedelta(seconds=5):  # not available do 5 seconds before
+                        location = data_file.index[(data_file['start_time'] == trigger_time)]
+                        data_file.at[location, ibutton_name] = temp.iloc[location_temp]['Value']
 
         # Drop missing trials
-        missings = data_file.index[data_file[ibutton_name] == 99.9]
-        for missing in missings:
-            data_file.drop(missing, inplace=True)
+            missings = data_file.index[data_file[ibutton_name] == 99.9]
+            for missing in missings:
+                data_file.drop(missing, inplace=True)
 
     # Calculate three DPGs
     print("Calculate DPG_finger-chest")
