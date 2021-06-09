@@ -1,6 +1,7 @@
 # Written by Rosalie Lucas
-# Last update 28/05/2021
+# Last update 05/06/2021
 # Useful for combining Triggerlogger, iButton, FLIR and questionnaire data
+# For the BSRT
 
 # Data structure in the following folders
 # [Data] --------- [FLIR] |
@@ -89,6 +90,7 @@ for participant in trigger_list:
             data_file.drop(error, inplace=True)
 
     data_file.dropna(inplace=True)
+    data_file.reset_index(drop=True, inplace=True)
 
     # Add the flir data
     print("Processing FLIR data")
@@ -98,6 +100,7 @@ for participant in trigger_list:
     # Import the files
     for file in flir_list:
         if file.startswith(participant_id):
+            # FLIR = True
             flir_path = flir_folder + '/' + file
             flir_data = pd.read_excel(flir_path, skiprows=range(0, 12))
             # Create the right columns
@@ -106,6 +109,7 @@ for participant in trigger_list:
             data_file['FLIR_nose'] = 99.9
             break
         else:
+            # FLIR = False
             flir_data = None
 
     if flir_data is not None:
@@ -148,6 +152,10 @@ for participant in trigger_list:
                 data_file.at[row, 'FLIR_nose'] = average_el2
                 print(f'{trial} done!')
                 trial += 1
+
+        missings = data_file.index[(data_file['FLIR_nose'] == 99.9) |(data_file['FLIR_forehead'] == 99.9)]
+        for missing in missings:
+            data_file.drop(missing, inplace=True)
 
     # Add column with reaction times
     print("Adding reaction times")
@@ -192,7 +200,22 @@ for participant in trigger_list:
             for missing in missings:
                 data_file.drop(missing, inplace=True)
 
-    # Calculate three DPGs
+    # Uncomment when you want to De-mean temperature features
+    # print("De-mean temperature features")
+    # if FLIR:
+    #     features = ['FLIR_forehead', 'FLIR_nose', 'CB000000452D7441', '4B0000004516B141', '7200000045201D41',
+    #                 '76000000452C9741', 'F9000000452CCF41', '9A00000045146841']
+    # else:
+    #     features = ['CB000000452D7441', '4B0000004516B141', '7200000045201D41',
+    #                 '76000000452C9741', 'F9000000452CCF41', '9A00000045146841']
+    #
+    # for feature in features:
+    #     mean = sum(data_file[feature]) / len(data_file[feature])
+    #     data_file["mean"] = mean
+    #     print(mean)
+    #     data_file[feature] = data_file[feature] - data_file['mean']
+
+    # Calculate four DPGs
     print("Calculate DPG_finger-chest")
     data_file['DPG_finger-chest'] = data_file['4B0000004516B141'] - data_file['9A00000045146841']
 
