@@ -1,3 +1,6 @@
+# Written by Andre Lucas and Rosalie Lucas
+# Script to generate a data set to test the random forest model
+
 import pandas as pd
 import numpy as np
 
