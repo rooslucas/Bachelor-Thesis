@@ -1,3 +1,5 @@
+# Written by Rosalie Lucas
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -10,14 +12,15 @@ fig, ax = plt.subplots()
 index = np.arange(12)
 bar_width = 0.4
 opacity = 0.8
-mod_1 = plt.barh(index +bar_width, performance_1, bar_width, color="coral", alpha=opacity)
-mod_2 = plt.barh(index, optimised_1, bar_width, color="darkcyan")
+mod_1 = plt.barh(index + bar_width, performance_1, bar_width, color='red', alpha=opacity, label="Before")
+mod_2 = plt.barh(index, optimised_1, bar_width, color="lightcoral", label="After")
 plt.xlabel("Gini Importance")
 plt.yticks(index + bar_width, ('chest',
                                'forehead', 'pinna', 'mastoid', 'finger', 'nose', 'DPG_finger-chest',
                                'DPG_nose-forehead',
                                'DPG_pinna-mastoid', 'FLIR_forehead', 'FLIR_nose', 'FLIR_DPG_nose-forehead'))
 plt.ylabel('Features')
+plt.legend()
 plt.tight_layout()
 # plt.title('Model 1: Gini Importance per feature')
 plt.savefig("Model1_gi")
@@ -30,11 +33,12 @@ optimised_2 = [0.353, 0.065, 0.107, 0.474]
 fig2, ax2 = plt.subplots()
 index2 = np.arange(4)
 
-mod_3 = plt.barh(index2 + bar_width, performance_2, bar_width, color="teal", alpha=opacity)
-mod_4 = plt.barh(index2, optimised_2, bar_width, color="gold")
+mod_3 = plt.barh(index2 + bar_width, performance_2, bar_width, color="green", alpha=opacity, label="Before")
+mod_4 = plt.barh(index2, optimised_2, bar_width, color="lightgreen", label="After")
 plt.xlabel("Gini Importance")
 plt.yticks(index2 + bar_width, ('Age', 'Gender', 'PSQI', 'MEQ_type'))
 plt.ylabel('Features')
+plt.legend()
 plt.tight_layout()
 # plt.title('Model 2: Gini Importance per feature')
 plt.savefig("Model2_gi")
@@ -47,8 +51,8 @@ optimised_3 = [0.021, 0.000, 0.005, 0.069, 0.034, 0.074, 0.058, 0.032, 0.060, 0.
 fig3, ax3 = plt.subplots()
 index3 = np.arange(16)
 
-mod_5 = plt.barh(index3 + bar_width, performance_3, bar_width, color="chocolate", alpha=opacity)
-mod_6 = plt.barh(index3, optimised_3, bar_width, color="mediumpurple")
+mod_5 = plt.barh(index3 + bar_width, performance_3, bar_width, color="blue", alpha=opacity, label="Before")
+mod_6 = plt.barh(index3, optimised_3, bar_width, color="lightskyblue", label="After")
 plt.xlabel("Gini Importance")
 plt.yticks(index3 + bar_width, ('Age', 'Gender', 'PSQI', 'MEQ_type', 'chest',
                                'forehead', 'pinna', 'mastoid', 'finger', 'nose', 'DPG_finger-chest',
@@ -56,6 +60,7 @@ plt.yticks(index3 + bar_width, ('Age', 'Gender', 'PSQI', 'MEQ_type', 'chest',
                                'DPG_pinna-mastoid', 'FLIR_forehead', 'FLIR_nose', 'FLIR_DPG_nose-forehead'))
 plt.ylabel('Features')
 plt.tight_layout()
+plt.legend()
 # plt.title('Model 3: Gini Importance per feature')
 plt.savefig("Model3_gi")
 plt.show()
@@ -74,22 +79,23 @@ index_2 = np.arange(2)
 bar_width = 0.3
 
 model_1 = plt.bar(index_2, accuracy_1, bar_width,
-                  color='coral',
-                  label='Model 1')
+                  color='red',
+                  label='Model 1', alpha=opacity)
 
 model_2 = plt.bar(index_2 + bar_width, accuracy_2, bar_width,
-                  color='lightseagreen',
-                  label='Model 2')
+                  color='green',
+                  label='Model 2', alpha=opacity)
 
 model_3 = plt.bar(index_2 + bar_width * 2, accuracy_3, bar_width,
-                  color='darkolivegreen',
-                  label='Model 3')
+                  color='blue',
+                  label='Model 3', alpha=opacity)
 
 plt.ylabel('Accuracy')
 plt.xlabel('Data')
 #plt.title('Accuracy per model')
 plt.xticks(index_2 + bar_width, ('Train', 'Test'))
 plt.legend()
+plt.ylim(0,1)
 plt.tight_layout()
 plt.savefig('accuracy_plot.png', dpi=300, bbox_inches='tight')
 plt.show()
@@ -113,15 +119,15 @@ index_2 = np.arange(2)
 bar_width = 0.3
 
 model_4 = plt.bar(index_2, accuracy_1, bar_width,
-                  color='coral',
+                  color='lightcoral',
                   label='Model 1')
 
 model_5 = plt.bar(index_2 + bar_width, accuracy_2, bar_width,
-                  color='lightseagreen',
+                  color='lightgreen',
                   label='Model 2')
 
 model_6 = plt.bar(index_2 + bar_width * 2, accuracy_3, bar_width,
-                  color='darkolivegreen',
+                  color='lightskyblue',
                   label='Model 3')
 
 plt.ylabel('Accuracy')
@@ -129,6 +135,7 @@ plt.xlabel('Data')
 #plt.title('Accuracy per model')
 plt.xticks(index_2 + bar_width, ('Train', 'Test'))
 plt.legend()
+plt.ylim(0,1)
 #plt.tight_layout()
 plt.savefig('accuracy_plot2.png', dpi=300, bbox_inches='tight')
 plt.show()
